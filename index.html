@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <title>Board</title>
@@ -14,7 +13,6 @@
             background: #f2f2f2;
             font-family: Arial, Helvetica, sans-serif;
         }
-
         .board {
             position: relative;
             width: 800px;
@@ -25,7 +23,6 @@
             background: linear-gradient(145deg, #ffffff, #e6e6e6);
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
         }
-
         .cell {
             display: flex;
             flex-direction: column;
@@ -33,20 +30,32 @@
             align-items: center;
             gap: 8px;
         }
-
         .circle {
             width: 60px;
             height: 60px;
-            background: radial-gradient(circle at 30% 30%, #555, #fff);
+            background: #ffffff;
             border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid #444;
         }
-
+        .circle.red {
+            background: red;
+        }
+        .circle.blue {
+            background: blue;
+        }
         .arrow {
             font-size: 22px;
             font-weight: bold;
             color: #444;
         }
-
+        .outer-square {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border: 4px solid #222;
+            pointer-events: none;
+        }
         .inner-square {
             position: absolute;
             width: 50%;
@@ -55,17 +64,10 @@
             left: 50%;
             transform: translate(-50%, -50%);
             border: 4px dashed #444;
-        }
-
-        .outer-square {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            border: 4px solid #222;
+            pointer-events: none;
         }
     </style>
 </head>
-
 <body>
     <div class="board">
         <div class="outer-square"></div>
@@ -135,6 +137,15 @@
             <div class="arrow">→</div>
         </div>
     </div>
+    <script>
+        let player = "red";
+        document.querySelectorAll(".circle").forEach(circle => {
+            circle.addEventListener("click", function () {
+                this.classList.remove("red", "blue");
+                this.classList.add(player);
+                player = player === "red" ? "blue" : "red";
+            });
+        });
+    </script>
 </body>
-
 </html>
