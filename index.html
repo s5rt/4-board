@@ -8,6 +8,7 @@
             margin: 0;
             height: 100vh;
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
             background: #f2f2f2;
@@ -66,12 +67,27 @@
             border: 4px dashed #444;
             pointer-events: none;
         }
+        /* RESET BUTTON */
+        .reset-btn {
+            margin-top: 25px;
+            padding: 12px 30px;
+            font-size: 16px;
+            border: none;
+            background: #333;
+            color: white;
+            cursor: pointer;
+            border-radius: 6px;
+        }
+        .reset-btn:hover {
+            background: #555;
+        }
     </style>
 </head>
 <body>
     <div class="board">
         <div class="outer-square"></div>
         <div class="inner-square"></div>
+        <!-- CELLS -->
         <div class="cell">
             <div class="circle"></div>
             <div class="arrow">←</div>
@@ -137,14 +153,25 @@
             <div class="arrow">→</div>
         </div>
     </div>
+    <button class="reset-btn" id="resetBoard">Reset Board</button>
     <script>
         let player = "red";
         document.querySelectorAll(".circle").forEach(circle => {
             circle.addEventListener("click", function () {
-                this.classList.remove("red", "blue");
+                /* Prevent recoloring */
+                if (this.classList.contains("red") || this.classList.contains("blue")) {
+                    return;
+                }
                 this.classList.add(player);
                 player = player === "red" ? "blue" : "red";
             });
+        });
+        /* RESET FUNCTION */
+        document.getElementById("resetBoard").addEventListener("click", function () {
+            document.querySelectorAll(".circle").forEach(circle => {
+                circle.classList.remove("red", "blue");
+            });
+            player = "red";
         });
     </script>
 </body>
