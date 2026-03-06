@@ -194,7 +194,7 @@
         function rotateOrbit(indexes) {
             const circles = document.querySelectorAll(".circle");
             const colors = indexes.map(i => getColor(circles[i]));
-            colors.push(colors.shift());
+            colors.push(colors.shift()); // counter-clockwise
             indexes.forEach((idx, i) => {
                 setTimeout(() => {
                     setColor(circles[idx], colors[i]);
@@ -204,6 +204,35 @@
         function rotateBoard() {
             rotateOrbit(outer);
             rotateOrbit(inner);
+        }
+        function checkWin() {
+            const circles = document.querySelectorAll(".circle");
+            const board = [...circles].map(c => {
+                if (c.classList.contains("red")) return "red";
+                if (c.classList.contains("blue")) return "blue";
+                return "";
+            });
+            const wins = [
+                [0, 1, 2, 3],
+                [4, 5, 6, 7],
+                [8, 9, 10, 11],
+                [12, 13, 14, 15],
+                [0, 4, 8, 12],
+                [1, 5, 9, 13],
+                [2, 6, 10, 14],
+                [3, 7, 11, 15],
+                [0, 5, 10, 15],
+                [3, 6, 9, 12]
+            ];
+            for (let line of wins) {
+                const [a, b, c, d] = line;
+                if (board[a] && board[a] === board[b] && board[a] === board[c] && board[a] === board[d]) {
+                    alert(board[a] + " wins");
+                    boardLocked = true;
+                    return;
+                }
+            }
+            boardLocked = false;
         }
         document.querySelectorAll(".circle").forEach(circle => {
             circle.addEventListener("click", function () {
@@ -215,9 +244,11 @@
                     rotateBoard();
                 }, 1000);
                 setTimeout(() => {
-                    player = player === "red" ? "blue" : "red";
-                    boardLocked = false;
-                }, 1400);
+                    checkWin(); // only after rotation
+                    if (!boardLocked) {
+                        player = player === "red" ? "blue" : "red";
+                    }
+                }, 2000);
             });
         });
         document.getElementById("resetBoard").addEventListener("click", function () {
