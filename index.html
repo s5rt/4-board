@@ -73,7 +73,7 @@
         }
 
         .used {
-            opacity: 0.25;
+            opacity: .25;
         }
 
         .board {
@@ -83,17 +83,51 @@
             display: grid;
             grid-template-columns: repeat(4, 1fr);
             grid-template-rows: repeat(4, 1fr);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, .25);
+            overflow: hidden;
+        }
+
+        /* RED BASE LAYER */
+        .board::before {
+            content: "";
+            position: absolute;
+            inset: 0;
             background: radial-gradient(circle, #ffffff 20%, #f5d2d2 80%);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
-            transition: background .5s;
+            transition: opacity 1.2s ease;
+            z-index: 0;
+        }
+
+        /* BLUE OVERLAY LAYER */
+        .board::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle, #ffffff 20%, #9ea1ff 80%);
+            opacity: 0;
+            transition: opacity 1.2s ease;
+            z-index: 0;
+        }
+
+        /* when blue player's turn */
+        .board.blueTurn::after {
+            opacity: 1;
+        }
+
+        /* ensure cells stay above gradient layers */
+        .cell,
+        .outer-square,
+        .inner-square,
+        #lineLayer {
+            position: relative;
+            z-index: 1;
         }
 
         .board.redTurn {
-            background: radial-gradient(circle, #ffffff 20%, #f5d2d2 80%);
+            --accent: #f5d2d2;
         }
 
         .board.blueTurn {
-            background: radial-gradient(circle, #ffffff 20%, #9ea1ff 80%);
+            --accent: #9ea1ff;
         }
 
         .cell {
@@ -111,7 +145,7 @@
             border-radius: 50%;
             cursor: pointer;
             border: 2px solid #444;
-            transition: background .4s, transform .4s;
+            transition: background .35s ease, transform .35s ease;
         }
 
         .circle.red {
