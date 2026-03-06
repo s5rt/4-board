@@ -84,7 +84,7 @@
         .circle {
             width: 60px;
             height: 60px;
-            background: #ffffff;
+            background: #fff;
             border-radius: 50%;
             cursor: pointer;
             border: 2px solid #444;
@@ -145,6 +145,32 @@
             top: 0;
             left: 0;
             pointer-events: none;
+        }
+
+        /* WIN POPUP */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.45);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            visibility: hidden;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal h2 {
+            margin-bottom: 20px;
         }
     </style>
 </head>
@@ -231,6 +257,13 @@
         </div>
     </div>
     <button class="reset-btn" id="resetBoard">Reset Board</button>
+    <!-- WIN POPUP -->
+    <div id="winModal" class="modal">
+        <div class="modal-content">
+            <h2 id="winnerText"></h2>
+            <button class="reset-btn" onclick="resetGame()">Reset Game</button>
+        </div>
+    </div>
     <script>
         let player = "red";
         let boardLocked = false;
@@ -295,6 +328,11 @@
             line.setAttribute("stroke-linecap", "round");
             svg.appendChild(line);
         }
+        function showWin(player) {
+            document.getElementById("winnerText").textContent =
+                player.charAt(0).toUpperCase() + player.slice(1) + " Wins!";
+            document.getElementById("winModal").style.visibility = "visible";
+        }
         function checkWin() {
             const circles = document.querySelectorAll(".circle");
             const board = [...circles].map(c => {
@@ -318,10 +356,10 @@
                 const [a, b, c, d] = line;
                 if (board[a] && board[a] === board[b] && board[a] === board[c] && board[a] === board[d]) {
                     drawWinLine(a, d);
-                    setTimeout(() => {
-                        alert(board[a] + " wins");
-                    }, 100);
                     boardLocked = true;
+                    setTimeout(() => {
+                        showWin(board[a]);
+                    }, 300);
                     return;
                 }
             }
@@ -355,20 +393,22 @@
                 }, 2000);
             });
         });
-        document.getElementById("resetBoard").addEventListener("click", function () {
-            document.querySelectorAll(".circle").forEach(circle => {
-                circle.classList.remove("red", "blue");
+        function resetGame() {
+            document.querySelectorAll(".circle").forEach(c => {
+                c.classList.remove("red", "blue");
             });
             document.querySelectorAll(".dot").forEach(d => {
                 d.classList.remove("used");
             });
             document.getElementById("lineLayer").innerHTML = "";
+            document.getElementById("winModal").style.visibility = "hidden";
             redRemaining = 8;
             blueRemaining = 8;
             player = "red";
             boardLocked = false;
             turnText.textContent = "Red player's turn";
-        });
+        }
+        document.getElementById("resetBoard").addEventListener("click", resetGame);
     </script>
 </body>
 
