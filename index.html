@@ -16,6 +16,52 @@
             font-family: Arial, Helvetica, sans-serif;
         }
 
+        /* TOP UI */
+        .game-ui {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 1100px;
+            margin-bottom: 20px;
+        }
+
+        .turn {
+            font-size: 22px;
+            font-weight: bold;
+        }
+
+        .player {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .dot-row {
+            display: grid;
+            grid-template-columns: repeat(4, 18px);
+            gap: 6px;
+        }
+
+        .dot {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+        }
+
+        .redDot {
+            background: red;
+        }
+
+        .blueDot {
+            background: blue;
+        }
+
+        .used {
+            opacity: 0.2
+        }
+
+        /* BOARD */
         .board {
             position: relative;
             width: 880px;
@@ -33,15 +79,6 @@
             justify-content: center;
             align-items: center;
             gap: 8px;
-        }
-
-        .circle {
-            width: 60px;
-            height: 60px;
-            background: #ffffff;
-            border-radius: 50%;
-            cursor: pointer;
-            border: 2px solid #444;
         }
 
         .circle {
@@ -88,7 +125,6 @@
             pointer-events: none;
         }
 
-        /* RESET BUTTON */
         .reset-btn {
             margin-top: 25px;
             padding: 12px 30px;
@@ -103,14 +139,32 @@
         .reset-btn:hover {
             background: #555;
         }
+
+        #lineLayer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+        }
     </style>
 </head>
 
 <body>
+    <div class="game-ui">
+        <div class="player">
+            <div>Player 1</div>
+            <div id="redDots" class="dot-row"></div>
+        </div>
+        <div id="turnText" class="turn">Red player's turn</div>
+        <div class="player">
+            <div>Player 2</div>
+            <div id="blueDots" class="dot-row"></div>
+        </div>
+    </div>
     <div class="board">
+        <svg id="lineLayer" width="880" height="880"></svg>
         <div class="outer-square"></div>
         <div class="inner-square"></div>
-        <!-- CELLS -->
         <div class="cell">
             <div class="circle"></div>
             <div class="arrow">↓</div>
@@ -182,6 +236,21 @@
         let boardLocked = false;
         const outer = [0, 1, 2, 3, 7, 11, 15, 14, 13, 12, 8, 4];
         const inner = [5, 6, 10, 9];
+        const redDotsContainer = document.getElementById("redDots");
+        const blueDotsContainer = document.getElementById("blueDots");
+        const turnText = document.getElementById("turnText");
+        let redRemaining = 8;
+        let blueRemaining = 8;
+        for (let i = 0; i < 8; i++) {
+            let d = document.createElement("div");
+            d.className = "dot redDot";
+            redDotsContainer.appendChild(d);
+        }
+        for (let i = 0; i < 8; i++) {
+            let d = document.createElement("div");
+            d.className = "dot blueDot";
+            blueDotsContainer.appendChild(d);
+        }
         function getColor(el) {
             if (el.classList.contains("red")) return "red";
             if (el.classList.contains("blue")) return "blue";
@@ -194,7 +263,7 @@
         function rotateOrbit(indexes) {
             const circles = document.querySelectorAll(".circle");
             const colors = indexes.map(i => getColor(circles[i]));
-            colors.push(colors.shift()); // counter-clockwise
+            colors.push(colors.shift());
             indexes.forEach((idx, i) => {
                 setTimeout(() => {
                     setColor(circles[idx], colors[i]);
@@ -204,6 +273,27 @@
         function rotateBoard() {
             rotateOrbit(outer);
             rotateOrbit(inner);
+        }
+        function drawWinLine(a, d) {
+            const circles = document.querySelectorAll(".circle");
+            const boardRect = document.querySelector(".board").getBoundingClientRect();
+            const start = circles[a].getBoundingClientRect();
+            const end = circles[d].getBoundingClientRect();
+            const x1 = start.left + start.width / 2 - boardRect.left;
+            const y1 = start.top + start.height / 2 - boardRect.top;
+            const x2 = end.left + end.width / 2 - boardRect.left;
+            const y2 = end.top + end.height / 2 - boardRect.top;
+            const svg = document.getElementById("lineLayer");
+            svg.innerHTML = "";
+            const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+            line.setAttribute("x1", x1);
+            line.setAttribute("y1", y1);
+            line.setAttribute("x2", x2);
+            line.setAttribute("y2", y2);
+            line.setAttribute("stroke", "black");
+            line.setAttribute("stroke-width", "10");
+            line.setAttribute("stroke-linecap", "round");
+            svg.appendChild(line);
         }
         function checkWin() {
             const circles = document.querySelectorAll(".circle");
@@ -227,7 +317,10 @@
             for (let line of wins) {
                 const [a, b, c, d] = line;
                 if (board[a] && board[a] === board[b] && board[a] === board[c] && board[a] === board[d]) {
-                    alert(board[a] + " wins");
+                    drawWinLine(a, d);
+                    setTimeout(() => {
+                        alert(board[a] + " wins");
+                    }, 100);
                     boardLocked = true;
                     return;
                 }
@@ -240,13 +333,24 @@
                 if (this.classList.contains("red") || this.classList.contains("blue")) return;
                 boardLocked = true;
                 this.classList.add(player);
+                if (player === "red") {
+                    redDotsContainer.children[8 - redRemaining].classList.add("used");
+                    redRemaining--;
+                } else {
+                    blueDotsContainer.children[8 - blueRemaining].classList.add("used");
+                    blueRemaining--;
+                }
                 setTimeout(() => {
                     rotateBoard();
                 }, 1000);
                 setTimeout(() => {
-                    checkWin(); // only after rotation
+                    checkWin();
                     if (!boardLocked) {
                         player = player === "red" ? "blue" : "red";
+                        turnText.textContent =
+                            player.charAt(0).toUpperCase() +
+                            player.slice(1) +
+                            " player's turn";
                     }
                 }, 2000);
             });
@@ -255,8 +359,15 @@
             document.querySelectorAll(".circle").forEach(circle => {
                 circle.classList.remove("red", "blue");
             });
+            document.querySelectorAll(".dot").forEach(d => {
+                d.classList.remove("used");
+            });
+            document.getElementById("lineLayer").innerHTML = "";
+            redRemaining = 8;
+            blueRemaining = 8;
             player = "red";
             boardLocked = false;
+            turnText.textContent = "Red player's turn";
         });
     </script>
 </body>
