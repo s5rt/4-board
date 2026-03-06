@@ -2,6 +2,7 @@
 <html lang="en">
 
 <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta charset="UTF-8">
     <title>Board Game</title>
     <style>
@@ -248,17 +249,99 @@
                 stroke-dashoffset: 0
             }
         }
+
+        /* ---------- MOBILE LAYOUT ---------- */
+        @media (max-width: 850px) {
+            body {
+                justify-content: flex-start;
+                padding-top: 10px;
+                height: auto;
+                min-height: 100vh;
+            }
+
+            .board {
+                width: 94vw;
+                height: 94vw;
+                max-width: 520px;
+                max-height: 520px;
+                box-shadow: none;
+            }
+
+            #lineLayer {
+                width: 100%;
+                height: 100%;
+            }
+
+            .circle {
+                width: clamp(36px, 10vw, 56px);
+                height: clamp(36px, 10vw, 56px);
+            }
+
+            .arrow {
+                font-size: clamp(14px, 4vw, 20px);
+            }
+
+            #pl1,
+            #pl2 {
+                position: static;
+                transform: none;
+                border-radius: 8px;
+                padding: 10px 12px;
+            }
+
+            .plid {
+                display: none;
+            }
+
+            body {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .playerContainer {
+                /* display: flex; */
+                justify-content: space-around;
+                width: 100%;
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                padding: 8px 0;
+                background: rgba(255, 255, 255, 0.85);
+                backdrop-filter: blur(6px);
+            }
+
+            .dot-row {
+                display: flex;
+                gap: 6px;
+            }
+
+            .dot {
+                width: 16px;
+                height: 16px;
+            }
+
+            .turn {
+                margin-top: 12px;
+            }
+
+            .reset-btn {
+                margin-bottom: 80px;
+            }
+        }
     </style>
 </head>
 
 <body>
-    <div class="player activePlayer" id="pl1">
-        <div>Player 1</div>
-        <div id="redDots" class="dot-row"></div>
-    </div>
-    <div class="player" id="pl2">
-        <div>Player 2</div>
-        <div id="blueDots" class="dot-row"></div>
+    <div class="playerContainer">
+        <div class="player activePlayer" id="pl1">
+            <div class="plid">Player 1</div>
+            <div id="redDots" class="dot-row"></div>
+        </div>
+        <div class="player" id="pl2">
+            <div class="plid">Player 2</div>
+            <div id="blueDots" class="dot-row"></div>
+        </div>
     </div>
     <div class="board">
         <svg id="lineLayer" width="880" height="880"></svg>
