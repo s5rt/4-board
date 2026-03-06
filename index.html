@@ -16,35 +16,51 @@
             font-family: Arial, Helvetica, sans-serif;
         }
 
-        .game-ui {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            width: 1100px;
-            margin-bottom: 20px;
-        }
-
         .turn {
             font-size: 22px;
             font-weight: bold;
+            margin-top: 10px;
         }
 
         .player {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
+            font-weight: bold;
+        }
+
+        #pl1 {
+            position: fixed;
+            top: 45%;
+            left: 30px;
+            transform: translateY(-50%);
+            border: 2px solid red;
+            background: #ffecec;
+            padding: 15px 20px;
+            border-radius: 10px;
+        }
+
+        #pl2 {
+            position: fixed;
+            top: 45%;
+            right: 30px;
+            transform: translateY(-50%);
+            border: 2px solid blue;
+            background: #e9ecff;
+            padding: 15px 20px;
+            border-radius: 10px;
         }
 
         .dot-row {
             display: grid;
-            grid-template-columns: repeat(4, 18px);
-            gap: 6px;
+            grid-template-columns: repeat(4, 28px);
+            gap: 10px;
         }
 
         .dot {
-            width: 18px;
-            height: 18px;
+            width: 28px;
+            height: 28px;
             border-radius: 50%;
         }
 
@@ -57,7 +73,7 @@
         }
 
         .used {
-            opacity: 0.2
+            opacity: 0.25;
         }
 
         .board {
@@ -69,7 +85,7 @@
             grid-template-rows: repeat(4, 1fr);
             background: linear-gradient(145deg, #ffffff, #f5d2d2);
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
-            transition: background 0.5s;
+            transition: background .5s;
         }
 
         .board.redTurn {
@@ -95,7 +111,7 @@
             border-radius: 50%;
             cursor: pointer;
             border: 2px solid #444;
-            transition: background 0.4s, transform 0.4s;
+            transition: background .4s, transform .4s;
         }
 
         .circle.red {
@@ -133,7 +149,7 @@
         }
 
         .reset-btn {
-            margin-top: 25px;
+            margin-top: 20px;
             padding: 12px 30px;
             font-size: 16px;
             border: none;
@@ -141,6 +157,7 @@
             color: white;
             cursor: pointer;
             border-radius: 6px;
+            transition: .2s;
         }
 
         .reset-btn:hover {
@@ -160,7 +177,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.45);
+            background: rgba(0, 0, 0, .45);
             display: flex;
             justify-content: center;
             align-items: center;
@@ -172,7 +189,7 @@
             padding: 40px;
             border-radius: 10px;
             text-align: center;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, .3);
         }
 
         .modal h2 {
@@ -183,12 +200,11 @@
 
 <body>
     <div class="game-ui">
-        <div class="player">
+        <div class="player" id="pl1">
             <div>Player 1</div>
             <div id="redDots" class="dot-row"></div>
         </div>
-        <div id="turnText" class="turn">Red player's turn</div>
-        <div class="player">
+        <div class="player" id="pl2">
             <div>Player 2</div>
             <div id="blueDots" class="dot-row"></div>
         </div>
@@ -262,6 +278,8 @@
             <div class="arrow">↑</div>
         </div>
     </div>
+    <br>
+    <div id="turnText" class="turn">Red player's turn</div>
     <button class="reset-btn" id="resetBoard">Reset Board</button>
     <div id="winModal" class="modal">
         <div class="modal-content">
