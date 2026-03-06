@@ -39,11 +39,22 @@
             cursor: pointer;
             border: 2px solid #444;
         }
-        .circle.red {
-            background: red;
+      .circle{
+            width: 60px;
+            height: 60px;
+            background: #ffffff;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid #444;
+            transition: background 0.4s, transform 0.4s;
         }
-        .circle.blue {
+        .circle.red{
+            background: red;
+            transform: scale(1.15);
+        }
+        .circle.blue{
             background: blue;
+            transform: scale(1.15);
         }
         .arrow {
             font-size: 22px;
@@ -154,8 +165,9 @@
         </div>
     </div>
     <button class="reset-btn" id="resetBoard">Reset Board</button>
-  <script>
+    <script>
     let player = "red";
+    let boardLocked = false;
     const outer = [0, 1, 2, 3, 7, 11, 15, 14, 13, 12, 8, 4];
     const inner = [5, 6, 10, 9];
     function getColor(el) {
@@ -172,7 +184,9 @@
         const colors = indexes.map(i => getColor(circles[i]));
         colors.unshift(colors.pop());
         indexes.forEach((idx, i) => {
-            setColor(circles[idx], colors[i]);
+            setTimeout(() => {
+                setColor(circles[idx], colors[i]);
+            }, i * 80);
         });
     }
     function rotateBoard() {
@@ -181,10 +195,17 @@
     }
     document.querySelectorAll(".circle").forEach(circle => {
         circle.addEventListener("click", function () {
+            if (boardLocked) return;
             if (this.classList.contains("red") || this.classList.contains("blue")) return;
+            boardLocked = true;
             this.classList.add(player);
-            rotateBoard();
-            player = player === "red" ? "blue" : "red";
+            setTimeout(() => {
+                rotateBoard();
+            }, 1000);
+            setTimeout(() => {
+                player = player === "red" ? "blue" : "red";
+                boardLocked = false;
+            }, 1400);
         });
     });
     document.getElementById("resetBoard").addEventListener("click", function () {
@@ -192,6 +213,7 @@
             circle.classList.remove("red", "blue");
         });
         player = "red";
+        boardLocked = false;
     });
 </script>
 </body>
