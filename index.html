@@ -250,6 +250,63 @@
             }
         }
 
+        /* Help popup */
+        .helpModal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, .45);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .helpContent {
+            background: white;
+            padding: 30px 35px;
+            border-radius: 10px;
+            max-width: 600px;
+            text-align: left;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, .3);
+            position: relative;
+        }
+
+        .helpContent h3 {
+            margin-top: 0;
+        }
+
+        .helpContent p {
+            margin: 6px 0;
+            font-size: 18px;
+        }
+
+        .closeHelp {
+            position: absolute;
+            top: 10px;
+            right: 12px;
+            cursor: pointer;
+            font-size: 18px;
+        }
+
+        /* corner info button */
+        #helpButton {
+            position: fixed;
+            bottom: 15px;
+            right: 15px;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: #333;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            cursor: pointer;
+            z-index: 900;
+            box-shadow: 0 5px 12px rgba(0, 0, 0, .3);
+        }
+
         /* ---------- MOBILE LAYOUT ---------- */
         @media (max-width: 850px) {
             body {
@@ -333,6 +390,18 @@
 </head>
 
 <body>
+    <div id="howToPlay" class="helpModal">
+        <div class="helpContent">
+            <span class="closeHelp" onclick="closeHelp()">✕</span>
+            <h3>How to Play</h3>
+            <p>• Players take turns placing their color on an empty circle.</p>
+            <p>• After each move, the board rotates counter-clockwise automatically.</p>
+            <p>• Get 4 of your color in a row (horizontal, vertical, or diagonal) to win.</p>
+            <p>• If all pieces are used and nobody wins, it's a draw.</p>
+        </div>
+    </div>
+    <!-- INFO BUTTON -->
+    <div id="helpButton" onclick="openHelp()">ℹ</div>
     <div class="playerContainer">
         <div class="player activePlayer" id="pl1">
             <div class="plid">Player 1</div>
@@ -530,6 +599,14 @@
             updateActivePlayer()
         }
         document.getElementById("resetBoard").addEventListener("click", resetGame)
+    </script>
+    <script>
+        function closeHelp() {
+            document.getElementById("howToPlay").style.display = "none"
+        }
+        function openHelp() {
+            document.getElementById("howToPlay").style.display = "flex"
+        }
     </script>
 </body>
 
