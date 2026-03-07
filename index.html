@@ -58,27 +58,6 @@
             color: #888;
         }
 
-        /* spinning icon shown during rotation */
-        #spinIcon {
-            display: inline-block;
-            font-size: 22px;
-            opacity: 0;
-            transition: opacity .3s;
-            line-height: 1;
-        }
-
-        @keyframes spinCW {
-            to {
-                transform: rotate(360deg);
-            }
-        }
-
-        @keyframes spinCCW {
-            to {
-                transform: rotate(-360deg);
-            }
-        }
-
         /* ---- PLAYER PANELS ---- */
         .player {
             display: flex;
@@ -249,15 +228,6 @@
             display: flex;
             align-items: center;
             gap: 10px;
-        }
-
-        .rot-arrow-anim {
-            font-size: 22px;
-            animation: spinCW .8s linear infinite;
-        }
-
-        .rot-arrow-anim.ccw {
-            animation-name: spinCCW;
         }
 
         /* ---- ROTATION DIRECTION PANEL ---- */
@@ -788,7 +758,6 @@
         </script>
     </div>
     <div id="turnText" class="turn red-turn">
-        <span id="spinIcon">⟳</span>
         <span id="turnLabel">Red player's turn</span>
     </div>
     <button class="reset-btn" id="resetBoard">Reset Board</button>
@@ -809,7 +778,6 @@
         const blueDotsContainer = document.getElementById("blueDots")
         const turnText = document.getElementById("turnText")
         const turnLabel = document.getElementById("turnLabel")
-        const spinIcon = document.getElementById("spinIcon")
         let redRemaining = 8
         let blueRemaining = 8
         /* ---------- HIDDEN MECHANICS ---------- */
@@ -925,10 +893,8 @@
                 overlay.classList.add("visible")
                 turnLabel.textContent = "Board rotating…"
                 turnText.className = "turn rotating"
-                spinIcon.className = ""
             } else {
                 overlay.classList.remove("visible")
-                spinIcon.className = ""
             }
         }
         /* ---------- DRAW WIN LINE ---------- */
