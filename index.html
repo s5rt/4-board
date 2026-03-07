@@ -142,6 +142,12 @@
             cursor: pointer;
             border: 2px solid #444;
             transition: background .3s, transform .3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 30px;
+            color: white;
         }
 
         .circle.red {
@@ -152,6 +158,21 @@
         .circle.blue {
             background: blue;
             transform: scale(1.15);
+        }
+
+        .circle.red::after {
+            content: "O";
+        }
+
+        .circle.blue::after {
+            content: "X";
+        }
+
+        .circle.red::after,
+        .circle.blue::after {
+            font-size: 28px;
+            font-weight: 900;
+            text-shadow: 0 0 3px rgba(0, 0, 0, .4);
         }
 
         .board.redTurn .circle:hover:not(.red):not(.blue) {
@@ -420,10 +441,18 @@
         <div class="helpContent">
             <span class="closeHelp" onclick="closeHelp()">✕</span>
             <h3>How to Play</h3>
-            <p>• Players take turns placing their color on an empty circle.</p>
-            <p>• After each move, the board rotates counter-clockwise automatically.</p>
-            <p>• Get 4 of your color in a row (horizontal, vertical, or diagonal) to win.</p>
-            <p>• If all pieces are used and nobody wins, it's a draw.</p>
+            <p>• Two players take turns placing pieces on the board.</p>
+            <p>• Player 1 uses <b>red circles (O)</b> and Player 2 uses <b>blue circles (X)</b>.</p>
+            <p>• Click any empty circle to place your piece.</p>
+            <p>• After every move, the board rotates automatically.</p>
+            <p>• The outer ring and the inner square may rotate in different directions.
+                The arrows will appear after the first move to reveal the rotation pattern.</p>
+            <p>• The goal is to create a line of <b>4 of your pieces</b> in a row — horizontally, vertically, or
+                diagonally.</p>
+            <p>• Because the board rotates, lines can form <b>after the rotation</b>, not just when the piece is placed.
+            </p>
+            <p>• If both players form a line at the same time, the game ends in a <b>draw</b>.</p>
+            <p>• If all pieces are used and nobody forms a line, the game is also a <b>draw</b>.</p>
         </div>
     </div>
     <!-- INFO BUTTON -->
