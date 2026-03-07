@@ -607,16 +607,32 @@
                 [0, 5, 10, 15],
                 [3, 6, 9, 12]
             ]
+            let redWin = false
+            let blueWin = false
+            let winLine = null
             for (let line of wins) {
                 const [a, b, c, d] = line
                 if (board[a] && board[a] === board[b] && board[a] === board[c] && board[a] === board[d]) {
-                    drawWinLine(a, d)
-                    boardLocked = true
-                    setTimeout(() => {
-                        showWin(board[a])
-                    }, 300)
-                    return
+                    if (board[a] === "red") redWin = true
+                    if (board[a] === "blue") blueWin = true
+                    if (!winLine) winLine = [a, d]
                 }
+            }
+            /* BOTH PLAYERS WIN → DRAW */
+            if (redWin && blueWin) {
+                drawWinLine(winLine[0], winLine[1])
+                setTimeout(showDraw, 300)
+                boardLocked = true
+                return
+            }
+            /* SINGLE WINNER */
+            if (redWin || blueWin) {
+                drawWinLine(winLine[0], winLine[1])
+                boardLocked = true
+                setTimeout(() => {
+                    showWin(redWin ? "red" : "blue")
+                }, 300)
+                return
             }
             boardLocked = false
         }
