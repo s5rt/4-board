@@ -404,6 +404,14 @@
                 opacity: .7
             }
         }
+
+        .winLine.redLine {
+            stroke: red;
+        }
+
+        .winLine.blueLine {
+            stroke: blue;
+        }
     </style>
 </head>
 
@@ -465,7 +473,7 @@
         const turnText = document.getElementById("turnText")
         let redRemaining = 8
         let blueRemaining = 8
-        /* -------- NEW HIDDEN MECHANICS -------- */
+        /* ---------- HIDDEN MECHANICS ---------- */
         let rotationDirection = null
         let innerOpposite = null
         let gameInitialized = false
@@ -473,25 +481,24 @@
             "↑", "→", "→", "→",
             "↑", "", "", "↓",
             "↑", "", "", "↓",
-            "←", "←", "←", "↓",
-        ];
+            "←", "←", "←", "↓"
+        ]
         const arrowsOuterCCW = [
             "↓", "←", "←", "←",
             "↓", "", "", "↑",
             "↓", "", "", "↑",
-            "→", "→", "→", "↑",
-        ];
+            "→", "→", "→", "↑"
+        ]
         const arrowsInnerCW = ["", "", "", "", "", "→", "↓", "", "", "↑", "←", "", "", "", "", ""]
         const arrowsInnerCCW = ["", "", "", "", "", "↓", "←", "", "", "→", "↑", "", "", "", "", ""]
-        document.querySelectorAll(".arrow").forEach(a => {
-            a.style.opacity = 0
-        })
+        document.querySelectorAll(".arrow").forEach(a => a.style.opacity = 0)
         function initializeGame() {
-            rotationDirection = Math.random() < 0.5 ? "CW" : "CCW";
-            innerOpposite = Math.random() < 0.5;
-            revealArrows();
-            gameInitialized = true;
-        } function revealArrows() {
+            rotationDirection = Math.random() < 0.5 ? "CW" : "CCW"
+            innerOpposite = Math.random() < 0.5
+            revealArrows()
+            gameInitialized = true
+        }
+        function revealArrows() {
             const arrows = document.querySelectorAll(".arrow")
             let innerDirection = rotationDirection
             if (innerOpposite) {
@@ -505,43 +512,40 @@
                 } else {
                     a.textContent = outerSet[i]
                 }
-                if (a.textContent !== "") {
-                    a.style.opacity = 1
-                }
+                if (a.textContent !== "") a.style.opacity = 1
             })
         }
-        /* -------- EXISTING GAME SETUP -------- */
+        /* ---------- GAME SETUP ---------- */
         boardElement.classList.add("redTurn")
         for (let i = 0; i < 8; i++) {
             let d = document.createElement("div")
             d.className = "dot redDot"
             redDotsContainer.appendChild(d)
-        } for (let i = 0; i < 8; i++) {
+        }
+        for (let i = 0; i < 8; i++) {
             let d = document.createElement("div")
             d.className = "dot blueDot"
             blueDotsContainer.appendChild(d)
-        } function updateActivePlayer() {
+        }
+        function updateActivePlayer() {
             document.getElementById("pl1").classList.toggle("activePlayer", player === "red")
             document.getElementById("pl2").classList.toggle("activePlayer", player === "blue")
-        } function getColor(el) {
-            if (el.classList.contains("red")) return "red";
-            if (el.classList.contains("blue")) return "blue";
-            return "";
+        }
+        function getColor(el) {
+            if (el.classList.contains("red")) return "red"
+            if (el.classList.contains("blue")) return "blue"
+            return ""
         }
         function setColor(el, color) {
-            el.classList.remove("red", "blue");
-            if (color) el.classList.add(color);
-        } /*
-            -------- ROTATION ENGINE -------- */
+            el.classList.remove("red", "blue")
+            if (color) el.classList.add(color)
+        }
+        /* ---------- ROTATION ---------- */
         function rotateOrbit(indexes, direction) {
-            const
-                circles = document.querySelectorAll(".circle")
+            const circles = document.querySelectorAll(".circle")
             let colors = indexes.map(i => getColor(circles[i]))
-            if (direction === "CW") {
-                colors.unshift(colors.pop())
-            } else {
-                colors.push(colors.shift())
-            }
+            if (direction === "CW") colors.unshift(colors.pop())
+            else colors.push(colors.shift())
             indexes.forEach((idx, i) => {
                 setTimeout(() => {
                     setColor(circles[idx], colors[i])
@@ -556,8 +560,8 @@
             }
             rotateOrbit(inner, innerDirection)
         }
-        /* -------- WIN LINE -------- */
-        function drawWinLine(a, d) {
+        /* ---------- DRAW WIN LINE ---------- */
+        function drawWinLine(a, d, color) {
             const circles = document.querySelectorAll(".circle")
             const boardRect = boardElement.getBoundingClientRect()
             const start = circles[a].getBoundingClientRect()
@@ -567,27 +571,15 @@
             const x2 = end.left + end.width / 2 - boardRect.left
             const y2 = end.top + end.height / 2 - boardRect.top
             const svg = document.getElementById("lineLayer")
-            svg.innerHTML = ""
             const line = document.createElementNS("http://www.w3.org/2000/svg", "line")
             line.setAttribute("x1", x1)
             line.setAttribute("y1", y1)
             line.setAttribute("x2", x2)
             line.setAttribute("y2", y2)
-            line.classList.add("winLine")
+            line.classList.add("winLine", color === "red" ? "redLine" : "blueLine")
             svg.appendChild(line)
         }
-        /* -------- GAME END -------- */
-        function showWin(player) {
-            document.getElementById("winnerText").textContent =
-                player.charAt(0).toUpperCase() + player.slice(1) + " Wins!"
-            document.getElementById("winModal").style.visibility = "visible"
-        }
-        function showDraw() {
-            document.getElementById("winnerText").textContent = "Match Draw!"
-            document.getElementById("winModal").style.visibility = "visible"
-            boardLocked = true
-        }
-        /* -------- WIN DETECTION -------- */
+        /* ---------- WIN CHECK ---------- */
         function checkWin() {
             const circles = document.querySelectorAll(".circle")
             const board = [...circles].map(c => {
@@ -607,43 +599,55 @@
                 [0, 5, 10, 15],
                 [3, 6, 9, 12]
             ]
-            let redWin = false
-            let blueWin = false
-            let winLine = null
+            let redLines = []
+            let blueLines = []
             for (let line of wins) {
                 const [a, b, c, d] = line
                 if (board[a] && board[a] === board[b] && board[a] === board[c] && board[a] === board[d]) {
-                    if (board[a] === "red") redWin = true
-                    if (board[a] === "blue") blueWin = true
-                    if (!winLine) winLine = [a, d]
+                    if (board[a] === "red") redLines.push([a, d])
+                    if (board[a] === "blue") blueLines.push([a, d])
                 }
             }
-            /* BOTH PLAYERS WIN → DRAW */
-            if (redWin && blueWin) {
-                drawWinLine(winLine[0], winLine[1])
-                setTimeout(showDraw, 300)
+            const svg = document.getElementById("lineLayer")
+            svg.innerHTML = ""
+            if (redLines.length && blueLines.length) {
+                redLines.forEach(l => drawWinLine(l[0], l[1], "red"))
+                blueLines.forEach(l => drawWinLine(l[0], l[1], "blue"))
                 boardLocked = true
+                setTimeout(showDraw, 300)
                 return
             }
-            /* SINGLE WINNER */
-            if (redWin || blueWin) {
-                drawWinLine(winLine[0], winLine[1])
+            if (redLines.length) {
+                redLines.forEach(l => drawWinLine(l[0], l[1], "red"))
                 boardLocked = true
-                setTimeout(() => {
-                    showWin(redWin ? "red" : "blue")
-                }, 300)
+                setTimeout(() => showWin("red"), 300)
+                return
+            }
+            if (blueLines.length) {
+                blueLines.forEach(l => drawWinLine(l[0], l[1], "blue"))
+                boardLocked = true
+                setTimeout(() => showWin("blue"), 300)
                 return
             }
             boardLocked = false
         }
-        /* -------- PLAYER MOVE -------- */
+        /* ---------- GAME END ---------- */
+        function showWin(player) {
+            document.getElementById("winnerText").textContent =
+                player.charAt(0).toUpperCase() + player.slice(1) + " Wins!"
+            document.getElementById("winModal").style.visibility = "visible"
+        }
+        function showDraw() {
+            document.getElementById("winnerText").textContent = "Match Draw!"
+            document.getElementById("winModal").style.visibility = "visible"
+            boardLocked = true
+        }
+        /* ---------- PLAYER MOVE ---------- */
         document.querySelectorAll(".circle").forEach(circle => {
             circle.addEventListener("click", function () {
                 if (boardLocked) return
                 if (this.classList.contains("red") || this.classList.contains("blue")) return
-                if (!gameInitialized) {
-                    initializeGame()
-                }
+                if (!gameInitialized) initializeGame()
                 boardLocked = true
                 this.classList.add(player)
                 if (player === "red") {
@@ -653,9 +657,7 @@
                     blueDotsContainer.children[8 - blueRemaining].classList.add("used")
                     blueRemaining--
                 }
-                setTimeout(() => {
-                    rotateBoard()
-                }, 1000)
+                setTimeout(() => rotateBoard(), 1000)
                 setTimeout(() => {
                     checkWin()
                     if (!boardLocked && redRemaining === 0 && blueRemaining === 0) {
@@ -673,14 +675,10 @@
                 }, 2000)
             })
         })
-        /* -------- RESET -------- */
+        /* ---------- RESET ---------- */
         function resetGame() {
-            document.querySelectorAll(".circle").forEach(c => {
-                c.classList.remove("red", "blue")
-            })
-            document.querySelectorAll(".dot").forEach(d => {
-                d.classList.remove("used")
-            })
+            document.querySelectorAll(".circle").forEach(c => c.classList.remove("red", "blue"))
+            document.querySelectorAll(".dot").forEach(d => d.classList.remove("used"))
             document.getElementById("lineLayer").innerHTML = ""
             document.getElementById("winModal").style.visibility = "hidden"
             redRemaining = 8
@@ -693,9 +691,7 @@
             rotationDirection = null
             innerOpposite = null
             gameInitialized = false
-            document.querySelectorAll(".arrow").forEach(a => {
-                a.style.opacity = 0
-            })
+            document.querySelectorAll(".arrow").forEach(a => a.style.opacity = 0)
             updateActivePlayer()
         }
         document.getElementById("resetBoard").addEventListener("click", resetGame)
