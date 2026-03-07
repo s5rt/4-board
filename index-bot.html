@@ -1,0 +1,1301 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
+    <title>Board Game</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+        }
+
+        :root {
+            --red: #e8334a;
+            --blue: #2563eb;
+            --red-light: #fff0f2;
+            --blue-light: #eff3ff;
+            --gold: #f59e0b;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: #f0f0f0;
+            font-family: 'Outfit', Arial, sans-serif;
+            gap: 0;
+        }
+
+        /* ---- TURN TEXT ---- */
+        .turn {
+            font-size: 20px;
+            font-weight: 700;
+            margin-top: 14px;
+            letter-spacing: 0.01em;
+            transition: color .4s, opacity .3s;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .turn.red-turn {
+            color: var(--red);
+        }
+
+        .turn.blue-turn {
+            color: var(--blue);
+        }
+
+        .turn.rotating {
+            color: #888;
+        }
+
+        /* ---- PLAYER PANELS ---- */
+        .player {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            font-weight: 700;
+            font-size: 14px;
+            letter-spacing: .04em;
+            text-transform: uppercase;
+            transition: box-shadow .3s, transform .3s;
+            padding: 14px 18px;
+            border-radius: 12px;
+        }
+
+        .activePlayer {
+            box-shadow: 0 0 20px rgba(0, 0, 0, .18);
+            transform: scale(1.06);
+        }
+
+        #pl1 {
+            position: fixed;
+            top: 45%;
+            left: 24px;
+            transform: translateY(-50%);
+            border: 2.5px solid var(--red);
+            background: var(--red-light);
+            color: var(--red);
+        }
+
+        #pl1.activePlayer {
+            transform: translateY(-50%) scale(1.2);
+        }
+
+        #pl2 {
+            position: fixed;
+            top: 45%;
+            right: 24px;
+            transform: translateY(-50%);
+            border: 2.5px solid var(--blue);
+            background: var(--blue-light);
+            color: var(--blue);
+        }
+
+        #pl2.activePlayer {
+            transform: translateY(-50%) scale(1.2);
+        }
+
+        .dot-row {
+            display: grid;
+            grid-template-columns: repeat(4, 22px);
+            gap: 7px;
+        }
+
+        .dot {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            transition: opacity .3s, transform .3s;
+        }
+
+        .redDot {
+            background: var(--red);
+        }
+
+        .blueDot {
+            background: var(--blue);
+        }
+
+        .used {
+            opacity: .18;
+            transform: scale(0.8);
+        }
+
+        .remaining-count {
+            font-size: 22px;
+            font-weight: 900;
+            opacity: .7;
+        }
+
+        /* ---- BOARD ---- */
+        .board {
+            position: relative;
+            width: 620px;
+            height: 620px;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: repeat(4, 1fr);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, .22);
+            overflow: hidden;
+            border-radius: 4px;
+        }
+
+        .board::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle, #ffffff 10%, #ffd5da 80%);
+            transition: opacity 1.2s ease;
+            z-index: 0;
+        }
+
+        .board::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle, #ffffff 10%, #b8c4ff 80%);
+            opacity: 0;
+            transition: opacity 1.2s ease;
+            z-index: 0;
+        }
+
+        .board.blueTurn::after {
+            opacity: 1;
+        }
+
+        /* ---- BOARD LOCKED STATE ---- */
+        #lockOverlay {
+            position: absolute;
+            inset: 0;
+            z-index: 10;
+            pointer-events: none;
+            background: rgba(255, 255, 255, 0);
+            transition: background .25s;
+            border-radius: 4px;
+        }
+
+        .board.board-locked #lockOverlay {
+            background: rgba(255, 255, 255, 0.12);
+            pointer-events: all;
+            cursor: not-allowed;
+        }
+
+        .board.board-locked .circle:not(.red):not(.blue) {
+            opacity: 0.45;
+            cursor: not-allowed;
+        }
+
+        /* ---- ROTATION OVERLAY ---- */
+        #rotationOverlay {
+            position: absolute;
+            inset: 0;
+            z-index: 9;
+            pointer-events: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity .3s;
+        }
+
+        #rotationOverlay.visible {
+            opacity: 1;
+        }
+
+        .rot-badge {
+            background: rgba(255, 255, 255, 0.88);
+            border-radius: 50px;
+            padding: 10px 22px;
+            font-size: 16px;
+            font-weight: 700;
+            font-family: 'Outfit', sans-serif;
+            letter-spacing: .04em;
+            color: #333;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, .15);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* ---- ROTATION DIRECTION PANEL ---- */
+        #dirPanel {
+            display: flex;
+            gap: 20px;
+            margin-top: 10px;
+            opacity: 0;
+            transform: translateY(6px);
+            transition: opacity .5s, transform .5s;
+            pointer-events: none;
+        }
+
+        #dirPanel.revealed {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
+
+        .dir-chip {
+            background: white;
+            border-radius: 20px;
+            padding: 5px 14px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #444;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, .1);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            letter-spacing: .02em;
+        }
+
+        .dir-chip .dir-icon {
+            font-size: 16px;
+            display: inline-block;
+        }
+
+        .dir-chip.outer-chip {
+            border-left: 3px solid #f59e0b;
+        }
+
+        .dir-chip.inner-chip {
+            border-left: 3px solid #8b5cf6;
+        }
+
+        /* ---- CELLS / CIRCLES ---- */
+        .cell,
+        .outer-square,
+        .inner-square,
+        #lineLayer {
+            position: relative;
+            z-index: 1;
+        }
+
+        .cell {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .circle {
+            width: 60px;
+            height: 60px;
+            background: #fff;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid #bbb;
+            transition: background .3s, transform .3s, box-shadow .3s, opacity .3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 30px;
+            color: white;
+            position: relative;
+            overflow: visible;
+        }
+
+        .circle.red {
+            background: var(--red);
+            transform: scale(1.15);
+            border-color: var(--red);
+            box-shadow: 0 0 0 3px rgba(232, 51, 74, .25);
+        }
+
+        .circle.blue {
+            background: var(--blue);
+            transform: scale(1.15);
+            border-color: var(--blue);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, .25);
+        }
+
+        .circle.red::after {
+            content: "O";
+        }
+
+        .circle.blue::after {
+            content: "X";
+        }
+
+        .circle.red::after,
+        .circle.blue::after {
+            font-size: 28px;
+            font-weight: 900;
+            text-shadow: 0 0 4px rgba(0, 0, 0, .3);
+        }
+
+        .board.redTurn .circle:hover:not(.red):not(.blue):not(.board-locked *) {
+            background: #ffd5da;
+            transform: scale(1.08);
+            border-color: var(--red);
+        }
+
+        .board.blueTurn .circle:hover:not(.red):not(.blue):not(.board-locked *) {
+            background: #c7d2fe;
+            transform: scale(1.08);
+            border-color: var(--blue);
+        }
+
+        /* Piece placement pop animation */
+        @keyframes placePop {
+            0% {
+                transform: scale(1.15);
+            }
+
+            40% {
+                transform: scale(1.38);
+                box-shadow: 0 0 0 6px rgba(255, 255, 255, .5);
+            }
+
+            70% {
+                transform: scale(1.10);
+            }
+
+            100% {
+                transform: scale(1.15);
+            }
+        }
+
+        .circle.just-placed {
+            animation: placePop .45s cubic-bezier(.36, .07, .19, .97) forwards;
+        }
+
+        /* Ring sweep glow during rotation */
+        @keyframes ringGlow {
+            0% {
+                box-shadow: 0 0 0 0 var(--glow-color, gold);
+            }
+
+            40% {
+                box-shadow: 0 0 16px 6px var(--glow-color, gold);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 var(--glow-color, gold);
+            }
+        }
+
+        .circle.ring-sweep-outer {
+            animation: ringGlow .55s ease-in-out forwards;
+            --glow-color: rgba(245, 158, 11, .65);
+        }
+
+        .circle.ring-sweep-inner {
+            animation: ringGlow .55s ease-in-out forwards;
+            --glow-color: rgba(139, 92, 246, .65);
+        }
+
+        /* Arrow reveal bounce */
+        @keyframes arrowBounce {
+            0% {
+                opacity: 0;
+                transform: scale(0.5);
+            }
+
+            60% {
+                opacity: 1;
+                transform: scale(1.3);
+            }
+
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .arrow {
+            font-size: 20px;
+            font-weight: bold;
+            color: #444;
+            opacity: 0;
+            transition: opacity .4s;
+        }
+
+        .arrow.bounce-in {
+            animation: arrowBounce .4s cubic-bezier(.36, .07, .19, .97) forwards;
+        }
+
+        /* ---- BOARD DECORATIONS ---- */
+        .outer-square {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .inner-square {
+            position: absolute;
+            width: 50%;
+            height: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            border: 3px dashed rgba(80, 80, 80, .35);
+            pointer-events: none;
+            animation: pulse 2.5s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: .5;
+            }
+
+            50% {
+                opacity: .9;
+            }
+        }
+
+        /* ---- WIN LINE ---- */
+        #lineLayer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+        }
+
+        .winLine {
+            stroke-width: 10;
+            stroke-linecap: round;
+            stroke-dasharray: 1000;
+            stroke-dashoffset: 1000;
+            animation: drawLine .6s forwards;
+        }
+
+        .winLine.redLine {
+            stroke: var(--red);
+        }
+
+        .winLine.blueLine {
+            stroke: var(--blue);
+        }
+
+        @keyframes drawLine {
+            to {
+                stroke-dashoffset: 0;
+            }
+        }
+
+        /* ---- BUTTONS ---- */
+        .reset-btn {
+            margin-top: 16px;
+            padding: 11px 28px;
+            font-size: 15px;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 600;
+            border: none;
+            background: #222;
+            color: white;
+            cursor: pointer;
+            border-radius: 8px;
+            letter-spacing: .03em;
+            transition: background .2s, transform .15s;
+        }
+
+        .reset-btn:hover {
+            background: #444;
+            transform: translateY(-1px);
+        }
+
+        .reset-btn:active {
+            transform: translateY(0);
+        }
+
+        /* ---- MODAL ---- */
+        .modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, .45);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            visibility: hidden;
+            z-index: 999;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 40px 50px;
+            border-radius: 14px;
+            text-align: center;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, .3);
+            animation: modalPop .3s cubic-bezier(.36, .07, .19, .97);
+        }
+
+        @keyframes modalPop {
+            from {
+                transform: scale(.85);
+                opacity: 0;
+            }
+
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .modal h2 {
+            margin-bottom: 20px;
+            font-family: 'Outfit', sans-serif;
+            font-size: 28px;
+        }
+
+        /* ---- HELP ---- */
+        .helpModal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, .45);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .helpContent {
+            background: white;
+            padding: 30px 36px;
+            border-radius: 14px;
+            max-width: 580px;
+            text-align: left;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, .3);
+            position: relative;
+        }
+
+        .helpContent h3 {
+            margin-top: 0;
+            font-size: 20px;
+        }
+
+        .helpContent p {
+            margin: 8px 0;
+            font-size: 16px;
+            line-height: 1.5;
+        }
+
+        .closeHelp {
+            position: absolute;
+            top: 12px;
+            right: 16px;
+            cursor: pointer;
+            font-size: 18px;
+            color: #888;
+            transition: color .2s;
+        }
+
+        .closeHelp:hover {
+            color: #222;
+        }
+
+        #helpButton {
+            position: fixed;
+            bottom: 16px;
+            right: 16px;
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: #333;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            cursor: pointer;
+            z-index: 900;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, .3);
+            font-family: 'Outfit', sans-serif;
+            font-size: 18px;
+            transition: background .2s;
+        }
+
+        #helpButton:hover {
+            background: #555;
+        }
+
+        /* ---- BOT THINKING INDICATOR ---- */
+        .bot-thinking {
+            position: absolute;
+            bottom: -6px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 3px;
+            opacity: 0;
+            transition: opacity .3s;
+        }
+
+        .bot-thinking.visible {
+            opacity: 1;
+        }
+
+        .bot-dot {
+            width: 5px;
+            height: 5px;
+            background: var(--blue);
+            border-radius: 50%;
+            animation: botDotBounce 0.8s ease-in-out infinite;
+        }
+
+        .bot-dot:nth-child(2) {
+            animation-delay: 0.15s;
+        }
+
+        .bot-dot:nth-child(3) {
+            animation-delay: 0.30s;
+        }
+
+        @keyframes botDotBounce {
+
+            0%,
+            100% {
+                transform: translateY(0);
+                opacity: 0.4;
+            }
+
+            50% {
+                transform: translateY(-5px);
+                opacity: 1;
+            }
+        }
+
+        /* ---- MOBILE ---- */
+        @media (max-width: 850px) {
+            body {
+                justify-content: flex-start;
+                padding-top: 10px;
+            }
+
+            .board {
+                width: 94vw;
+                height: 94vw;
+                max-width: 520px;
+                max-height: 520px;
+                box-shadow: 0 8px 24px rgba(0, 0, 0, .15);
+            }
+
+            #lineLayer {
+                width: 100%;
+                height: 100%;
+            }
+
+            .circle {
+                width: clamp(32px, 9vw, 52px);
+                height: clamp(32px, 9vw, 52px);
+            }
+
+            #pl1,
+            #pl2 {
+                position: static;
+                transform: none;
+                border-radius: 8px;
+                padding: 8px 10px;
+            }
+
+            .plid {
+                display: none;
+            }
+
+            .playerContainer {
+                display: flex;
+                justify-content: space-around;
+                width: 100%;
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                padding: 8px 0;
+                background: rgba(255, 255, 255, .9);
+                backdrop-filter: blur(6px);
+            }
+
+            .dot-row {
+                display: flex;
+                gap: 5px;
+            }
+
+            .dot {
+                width: 14px;
+                height: 14px;
+            }
+
+            .turn {
+                margin-top: 10px;
+            }
+
+            .reset-btn {
+                margin-bottom: 80px;
+            }
+
+            #dirPanel {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- HOW TO PLAY MODAL -->
+    <div id="howToPlay" class="helpModal">
+        <div class="helpContent">
+            <span class="closeHelp" onclick="closeHelp()">✕</span>
+            <h3>How to Play</h3>
+            <p>• You are <b>Player 1 (red, O)</b> — play against the <b>Bot (blue, X)</b>.</p>
+            <p>• Click any empty circle to place your piece.</p>
+            <p>• After every move, the board rotates automatically.</p>
+            <p>• The outer ring and the inner square may rotate in different directions.
+                The arrows will appear after the first move to reveal the rotation pattern.</p>
+            <p>• The goal is to create a line of <b>4 of your pieces</b> in a row — horizontally, vertically, or
+                diagonally.</p>
+            <p>• Because the board rotates, lines can form <b>after the rotation</b>, not just when the piece is placed.
+            </p>
+            <p>• If both players form a line at the same time, the game ends in a <b>draw</b>.</p>
+            <p>• If all pieces are used and nobody forms a line, the game is also a <b>draw</b>.</p>
+        </div>
+    </div>
+    <div id="helpButton" onclick="openHelp()">ℹ</div>
+    <!-- PLAYER PANELS -->
+    <div class="playerContainer">
+        <div class="player activePlayer" id="pl1">
+            <div class="plid">Player 1</div>
+            <div id="redDots" class="dot-row"></div>
+            <div class="remaining-count" id="redCount">8</div>
+        </div>
+        <div class="player" id="pl2">
+            <div class="plid" id="pl2Label">Bot 🤖</div>
+            <div id="blueDots" class="dot-row"></div>
+            <div class="remaining-count" id="blueCount">8</div>
+            <!-- Bot thinking indicator sits under the panel -->
+            <div class="bot-thinking" id="botThinking">
+                <div class="bot-dot"></div>
+                <div class="bot-dot"></div>
+                <div class="bot-dot"></div>
+            </div>
+        </div>
+    </div>
+    <!-- BOARD -->
+    <div class="board redTurn">
+        <div id="lockOverlay"></div>
+        <div id="rotationOverlay">
+            <div class="rot-badge">
+                <span id="rotBadgeText">Rotating…</span>
+            </div>
+        </div>
+        <svg id="lineLayer" width="880" height="880"></svg>
+        <div class="outer-square"></div>
+        <div class="inner-square"></div>
+        <script>
+            for (let i = 0; i < 16; i++) {
+                document.write(`
+                    <div class="cell">
+                        <div class="circle"></div>
+                        <div class="arrow"></div>
+                    </div>
+                `)
+            }
+        </script>
+    </div>
+    <div id="turnText" class="turn red-turn">
+        <span id="turnLabel">Your turn</span>
+    </div>
+    <button class="reset-btn" id="resetBoard">Reset Board</button>
+    <!-- WIN MODAL -->
+    <div id="winModal" class="modal">
+        <div class="modal-content">
+            <h2 id="winnerText"></h2>
+            <button class="reset-btn" onclick="resetGame()">Play Again</button>
+        </div>
+    </div>
+    <script>
+        let player = "red"
+        let boardLocked = false
+        const boardElement = document.querySelector(".board")
+        const outer = [0, 1, 2, 3, 7, 11, 15, 14, 13, 12, 8, 4]
+        const inner = [5, 6, 10, 9]
+        const redDotsContainer = document.getElementById("redDots")
+        const blueDotsContainer = document.getElementById("blueDots")
+        const turnText = document.getElementById("turnText")
+        const turnLabel = document.getElementById("turnLabel")
+        let redRemaining = 8
+        let blueRemaining = 8
+
+        /* ---------- HIDDEN MECHANICS ---------- */
+        let rotationDirection = null
+        let innerOpposite = null
+        let gameInitialized = false
+
+        const arrowsOuterCW = [
+            "→", "→", "→", "↓",
+            "↑", "", "", "↓",
+            "↑", "", "", "↓",
+            "↑", "←", "←", "←"
+        ]
+        const arrowsOuterCCW = [
+            "↓", "←", "←", "←",
+            "↓", "", "", "↑",
+            "↓", "", "", "↑",
+            "→", "→", "→", "↑"
+        ]
+        const arrowsInnerCW = ["", "", "", "", "", "→", "↓", "", "", "↑", "←", "", "", "", "", ""]
+        const arrowsInnerCCW = ["", "", "", "", "", "↓", "←", "", "", "→", "↑", "", "", "", "", ""]
+
+        document.querySelectorAll(".arrow").forEach(a => { a.style.opacity = 0 })
+
+        function initializeGame() {
+            rotationDirection = Math.random() < .5 ? "CW" : "CCW"
+            innerOpposite = Math.random() < .5
+            revealArrows()
+            gameInitialized = true
+        }
+
+        function revealArrows() {
+            const arrows = document.querySelectorAll(".arrow")
+            const innerDir = innerOpposite
+                ? (rotationDirection === "CW" ? "CCW" : "CW")
+                : rotationDirection
+            const outerSet = rotationDirection === "CW" ? arrowsOuterCW : arrowsOuterCCW
+            const innerSet = innerDir === "CW" ? arrowsInnerCW : arrowsInnerCCW
+            arrows.forEach((a, i) => {
+                const text = inner.includes(i) ? innerSet[i] : outerSet[i]
+                a.textContent = text
+                if (text !== "") {
+                    a.classList.remove("bounce-in")
+                    void a.offsetWidth
+                    a.classList.add("bounce-in")
+                }
+            })
+        }
+
+        /* ---------- GAME SETUP ---------- */
+        boardElement.classList.add("redTurn")
+        for (let i = 0; i < 8; i++) {
+            let d = document.createElement("div")
+            d.className = "dot redDot"
+            redDotsContainer.appendChild(d)
+        }
+        for (let i = 0; i < 8; i++) {
+            let d = document.createElement("div")
+            d.className = "dot blueDot"
+            blueDotsContainer.appendChild(d)
+        }
+
+        function updateActivePlayer() {
+            document.getElementById("pl1").classList.toggle("activePlayer", player === "red")
+            document.getElementById("pl2").classList.toggle("activePlayer", player === "blue")
+        }
+
+        function getColor(el) {
+            if (el.classList.contains("red")) return "red"
+            if (el.classList.contains("blue")) return "blue"
+            return ""
+        }
+
+        function setColor(el, color) {
+            el.classList.remove("red", "blue")
+            if (color) el.classList.add(color)
+        }
+
+        /* ---------- ROTATION ANIMATION ---------- */
+        function animateRingSweep(indexes, direction, type) {
+            const circles = document.querySelectorAll(".circle")
+            const cls = type === "outer" ? "ring-sweep-outer" : "ring-sweep-inner"
+            const seq = direction === "CW" ? [...indexes].reverse() : [...indexes]
+            seq.forEach((idx, i) => {
+                setTimeout(() => {
+                    const c = circles[idx]
+                    c.classList.remove(cls)
+                    void c.offsetWidth
+                    c.classList.add(cls)
+                    setTimeout(() => c.classList.remove(cls), 600)
+                }, i * 72)
+            })
+        }
+
+        /* ---------- ROTATION ---------- */
+        function rotateOrbit(indexes, direction) {
+            const circles = document.querySelectorAll(".circle")
+            let colors = indexes.map(i => getColor(circles[i]))
+            if (direction === "CW") colors.unshift(colors.pop())
+            else colors.push(colors.shift())
+            indexes.forEach((idx, i) => {
+                setTimeout(() => setColor(circles[idx], colors[i]), i * 80)
+            })
+        }
+
+        function rotateBoard() {
+            const innerDir = innerOpposite
+                ? (rotationDirection === "CW" ? "CCW" : "CW")
+                : rotationDirection
+            animateRingSweep(outer, rotationDirection, "outer")
+            setTimeout(() => animateRingSweep(inner, innerDir, "inner"), 150)
+            rotateOrbit(outer, rotationDirection)
+            rotateOrbit(inner, innerDir)
+        }
+
+        /* ---------- SET LOCKED STATE VISUALS ---------- */
+        function setLocked(val, rotating = false) {
+            boardLocked = val
+            boardElement.classList.toggle("board-locked", val)
+            const overlay = document.getElementById("rotationOverlay")
+            if (rotating) {
+                overlay.classList.add("visible")
+                turnLabel.textContent = "Board rotating…"
+                turnText.className = "turn rotating"
+            } else {
+                overlay.classList.remove("visible")
+            }
+        }
+
+        /* ---------- DRAW WIN LINE ---------- */
+        function drawWinLine(a, d, color) {
+            const circles = document.querySelectorAll(".circle")
+            const boardRect = boardElement.getBoundingClientRect()
+            const start = circles[a].getBoundingClientRect()
+            const end = circles[d].getBoundingClientRect()
+            const x1 = start.left + start.width / 2 - boardRect.left
+            const y1 = start.top + start.height / 2 - boardRect.top
+            const x2 = end.left + end.width / 2 - boardRect.left
+            const y2 = end.top + end.height / 2 - boardRect.top
+            const svg = document.getElementById("lineLayer")
+            const line = document.createElementNS("http://www.w3.org/2000/svg", "line")
+            line.setAttribute("x1", x1); line.setAttribute("y1", y1)
+            line.setAttribute("x2", x2); line.setAttribute("y2", y2)
+            line.classList.add("winLine", color === "red" ? "redLine" : "blueLine")
+            svg.appendChild(line)
+        }
+
+        /* ---------- WIN CHECK ---------- */
+        function checkWin() {
+            const circles = document.querySelectorAll(".circle")
+            const board = [...circles].map(c =>
+                c.classList.contains("red") ? "red" : c.classList.contains("blue") ? "blue" : ""
+            )
+            const wins = [
+                [0, 1, 2, 3], [4, 5, 6, 7], [8, 9, 10, 11], [12, 13, 14, 15],
+                [0, 4, 8, 12], [1, 5, 9, 13], [2, 6, 10, 14], [3, 7, 11, 15],
+                [0, 5, 10, 15], [3, 6, 9, 12]
+            ]
+            let redLines = [], blueLines = []
+            for (let line of wins) {
+                const [a, b, c, d] = line
+                if (board[a] && board[a] === board[b] && board[a] === board[c] && board[a] === board[d]) {
+                    if (board[a] === "red") redLines.push([a, d])
+                    if (board[a] === "blue") blueLines.push([a, d])
+                }
+            }
+            document.getElementById("lineLayer").innerHTML = ""
+            if (redLines.length && blueLines.length) {
+                redLines.forEach(l => drawWinLine(l[0], l[1], "red"))
+                blueLines.forEach(l => drawWinLine(l[0], l[1], "blue"))
+                setLocked(true)
+                setTimeout(showDraw, 300)
+                return
+            }
+            if (redLines.length) {
+                redLines.forEach(l => drawWinLine(l[0], l[1], "red"))
+                setLocked(true)
+                setTimeout(() => showWin("red"), 300)
+                return
+            }
+            if (blueLines.length) {
+                blueLines.forEach(l => drawWinLine(l[0], l[1], "blue"))
+                setLocked(true)
+                setTimeout(() => showWin("blue"), 300)
+                return
+            }
+            setLocked(false)
+        }
+
+        /* ---------- GAME END ---------- */
+        function showWin(p) {
+            document.getElementById("winnerText").textContent =
+                p === "blue" ? "Bot Wins! 🤖" : "You Win! 🎉"
+            document.getElementById("winModal").style.visibility = "visible"
+        }
+
+        function showDraw() {
+            document.getElementById("winnerText").textContent = "Match Draw!"
+            document.getElementById("winModal").style.visibility = "visible"
+        }
+
+        /* ============================================================
+           BOT LOGIC
+           Priority: win > block > strategic > random
+        ============================================================ */
+
+        /** Returns a snapshot of the board as a 16-element color array */
+        function getBoardSnapshot() {
+            const circles = document.querySelectorAll(".circle")
+            return [...circles].map(c =>
+                c.classList.contains("red") ? "red"
+                    : c.classList.contains("blue") ? "blue"
+                        : ""
+            )
+        }
+
+        /** Simulate one rotation step on a plain array */
+        function simulateRotation(board) {
+            if (!gameInitialized) return [...board]
+            const innerDir = innerOpposite
+                ? (rotationDirection === "CW" ? "CCW" : "CW")
+                : rotationDirection
+            let b = [...board]
+            // rotate outer ring
+            let outerColors = outer.map(i => b[i])
+            if (rotationDirection === "CW") outerColors.unshift(outerColors.pop())
+            else outerColors.push(outerColors.shift())
+            outer.forEach((idx, i) => b[idx] = outerColors[i])
+            // rotate inner ring
+            let innerColors = inner.map(i => b[i])
+            if (innerDir === "CW") innerColors.unshift(innerColors.pop())
+            else innerColors.push(innerColors.shift())
+            inner.forEach((idx, i) => b[idx] = innerColors[i])
+            return b
+        }
+
+        const WIN_LINES = [
+            [0, 1, 2, 3], [4, 5, 6, 7], [8, 9, 10, 11], [12, 13, 14, 15],
+            [0, 4, 8, 12], [1, 5, 9, 13], [2, 6, 10, 14], [3, 7, 11, 15],
+            [0, 5, 10, 15], [3, 6, 9, 12]
+        ]
+
+        /** Check if a given color has a 4-in-a-row on the board array */
+        function hasWon(board, color) {
+            return WIN_LINES.some(([a, b, c, d]) =>
+                board[a] === color && board[b] === color
+                && board[c] === color && board[d] === color
+            )
+        }
+
+        /**
+         * Count how many cells of `color` are in `line` on `board`,
+         * and how many are empty (potential).
+         */
+        function lineScore(board, line, color) {
+            let mine = 0, empty = 0
+            for (let idx of line) {
+                if (board[idx] === color) mine++
+                else if (board[idx] === "") empty++
+            }
+            return { mine, empty }
+        }
+
+        /**
+         * Score a board state from blue's perspective (higher = better for bot).
+         * Rewards: completing lines, being 1 away from a win.
+         * Penalises: red being close to a win.
+         */
+        function scoreBoard(board) {
+            let score = 0
+            for (let line of WIN_LINES) {
+                const { mine: myMine, empty: myEmpty } = lineScore(board, line, "blue")
+                const { mine: theirMine } = lineScore(board, line, "red")
+
+                // Ignore lines that are blocked by opponent
+                if (theirMine === 0) {
+                    if (myMine === 4) score += 10000
+                    else if (myMine === 3 && myEmpty === 1) score += 500
+                    else if (myMine === 2 && myEmpty === 2) score += 50
+                    else if (myMine === 1 && myEmpty === 3) score += 5
+                }
+                if (myMine === 0) {
+                    if (theirMine === 4) score -= 10000
+                    else if (theirMine === 3 && lineScore(board, line, "red").empty === 1) score -= 800
+                    else if (theirMine === 2) score -= 40
+                }
+            }
+            return score
+        }
+
+        /**
+         * The main bot decision function.
+         * Returns the index (0-15) of the chosen empty cell.
+         */
+        function chooseBotMove() {
+            const board = getBoardSnapshot()
+            const circles = document.querySelectorAll(".circle")
+            const emptyIndices = [...circles]
+                .map((c, i) => (!c.classList.contains("red") && !c.classList.contains("blue") ? i : -1))
+                .filter(i => i !== -1)
+
+            if (emptyIndices.length === 0) return -1
+
+            // ---- Pass 1: immediate win after rotation ----
+            for (let idx of emptyIndices) {
+                let b = [...board]; b[idx] = "blue"
+                const afterRot = simulateRotation(b)
+                if (hasWon(afterRot, "blue")) return idx
+            }
+
+            // ---- Pass 2: block opponent's immediate win after rotation ----
+            for (let idx of emptyIndices) {
+                // Check: if red were to play here next, would they win after rotation?
+                // We're looking for positions where, after we place blue,
+                // red cannot win — actually we want to block spots that if left empty,
+                // red could win. Simulate red placing at each empty and see.
+                let b = [...board]; b[idx] = "red"
+                const afterRot = simulateRotation(b)
+                if (hasWon(afterRot, "red")) return idx
+            }
+
+            // ---- Pass 3: score all possible moves, pick the best ----
+            let bestScore = -Infinity
+            let bestMoves = []
+
+            for (let idx of emptyIndices) {
+                let b = [...board]; b[idx] = "blue"
+                const afterRot = simulateRotation(b)
+                const s = scoreBoard(afterRot)
+                if (s > bestScore) {
+                    bestScore = s
+                    bestMoves = [idx]
+                } else if (s === bestScore) {
+                    bestMoves.push(idx)
+                }
+            }
+
+            // Among equally-scored moves, pick one with a small random bias
+            return bestMoves[Math.floor(Math.random() * bestMoves.length)]
+        }
+
+        /** Actually trigger the bot placing its piece */
+        function doBotMove() {
+            if (player !== "blue" || boardLocked) return
+
+            const idx = chooseBotMove()
+            if (idx === -1) return
+
+            const circles = document.querySelectorAll(".circle")
+            circles[idx].click()
+        }
+
+        /* ---------- PLAYER MOVE ---------- */
+        document.querySelectorAll(".circle").forEach(circle => {
+            circle.addEventListener("click", function () {
+                if (boardLocked) return
+                if (this.classList.contains("red") || this.classList.contains("blue")) return
+
+                // Human can only click when it's red's turn
+                if (player === "blue") return
+
+                if (!gameInitialized) initializeGame()
+
+                placePiece(this)
+            })
+        })
+
+        /**
+         * Shared piece-placement logic for both human and bot.
+         * `circleEl` is the .circle DOM element to fill.
+         */
+        function placePiece(circleEl) {
+            // Place piece
+            circleEl.classList.add(player)
+            circleEl.classList.remove("just-placed")
+            void circleEl.offsetWidth
+            circleEl.classList.add("just-placed")
+            setTimeout(() => circleEl.classList.remove("just-placed"), 500)
+
+            // Update dot tracker
+            if (player === "red") {
+                redDotsContainer.children[8 - redRemaining].classList.add("used")
+                redRemaining--
+                document.getElementById("redCount").textContent = redRemaining
+            } else {
+                blueDotsContainer.children[8 - blueRemaining].classList.add("used")
+                blueRemaining--
+                document.getElementById("blueCount").textContent = blueRemaining
+                // Hide bot thinking dots
+                document.getElementById("botThinking").classList.remove("visible")
+            }
+
+            // Lock board + show rotation overlay
+            setLocked(true, true)
+
+            // Rotate after 1s
+            setTimeout(() => rotateBoard(), 1000)
+
+            // Post-rotation check
+            setTimeout(() => {
+                setLocked(false)
+                checkWin()
+                if (boardLocked) return  // win/draw locked
+
+                if (redRemaining === 0 && blueRemaining === 0) {
+                    showDraw(); return
+                }
+
+                player = player === "red" ? "blue" : "red"
+                boardElement.classList.remove("redTurn", "blueTurn")
+                boardElement.classList.add(player === "red" ? "redTurn" : "blueTurn")
+                turnText.className = "turn " + (player === "red" ? "red-turn" : "blue-turn")
+                turnLabel.textContent = player === "red" ? "Your turn" : "Bot thinking…"
+                updateActivePlayer()
+
+                // Trigger bot move
+                if (player === "blue") {
+                    document.getElementById("botThinking").classList.add("visible")
+                    // Random delay 400–900ms for a natural feel
+                    const thinkDelay = 400 + Math.floor(Math.random() * 500)
+                    setTimeout(() => {
+                        if (!boardLocked && player === "blue") {
+                            if (!gameInitialized) initializeGame()
+                            const circles = document.querySelectorAll(".circle")
+                            const idx = chooseBotMove()
+                            if (idx !== -1) placePiece(circles[idx])
+                        }
+                    }, thinkDelay)
+                }
+            }, 2200)
+        }
+
+        /* ---------- RESET ---------- */
+        function resetGame() {
+            document.querySelectorAll(".circle").forEach(c =>
+                c.classList.remove("red", "blue", "just-placed", "ring-sweep-outer", "ring-sweep-inner")
+            )
+            document.querySelectorAll(".dot").forEach(d => d.classList.remove("used"))
+            document.getElementById("lineLayer").innerHTML = ""
+            document.getElementById("winModal").style.visibility = "hidden"
+            document.getElementById("rotationOverlay").classList.remove("visible")
+            document.getElementById("botThinking").classList.remove("visible")
+            redRemaining = 8
+            blueRemaining = 8
+            document.getElementById("redCount").textContent = "8"
+            document.getElementById("blueCount").textContent = "8"
+            player = "red"
+            boardElement.classList.remove("redTurn", "blueTurn", "board-locked")
+            boardElement.classList.add("redTurn")
+            turnText.className = "turn red-turn"
+            turnLabel.textContent = "Your turn"
+            rotationDirection = null
+            innerOpposite = null
+            gameInitialized = false
+            boardLocked = false
+            document.querySelectorAll(".arrow").forEach(a => {
+                a.textContent = ""
+                a.style.opacity = 0
+                a.classList.remove("bounce-in")
+            })
+            updateActivePlayer()
+        }
+
+        document.getElementById("resetBoard").addEventListener("click", resetGame)
+
+        function closeHelp() { document.getElementById("howToPlay").style.display = "none" }
+        function openHelp() { document.getElementById("howToPlay").style.display = "flex" }
+    </script>
+</body>
+
+</html>
