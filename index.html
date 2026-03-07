@@ -166,6 +166,9 @@
             font-size: 22px;
             font-weight: bold;
             color: #444;
+            font-size: clamp(14px, 4vw, 20px);
+            opacity: 0;
+            transition: opacity .4s;
         }
 
         .outer-square {
@@ -334,10 +337,6 @@
                 height: clamp(36px, 10vw, 56px);
             }
 
-            .arrow {
-                font-size: clamp(14px, 4vw, 20px);
-            }
-
             #pl1,
             #pl2 {
                 position: static;
@@ -384,6 +383,25 @@
 
             .reset-btn {
                 margin-bottom: 80px;
+            }
+        }
+
+        .inner-square {
+            border: 4px dashed #444;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                opacity: .7
+            }
+
+            50% {
+                opacity: 1
+            }
+
+            100% {
+                opacity: .7
             }
         }
     </style>
@@ -447,34 +465,83 @@
         const turnText = document.getElementById("turnText")
         let redRemaining = 8
         let blueRemaining = 8
+        /* -------- NEW HIDDEN MECHANICS -------- */
+        let rotationDirection = null
+        let innerOpposite = null
+        let gameInitialized = false
+        const arrowsOuterCW = [
+            "↑", "→", "→", "→",
+            "↑", "", "", "↓",
+            "↑", "", "", "↓",
+            "←", "←", "←", "↓",
+        ];
+        const arrowsOuterCCW = [
+            "↓", "←", "←", "←",
+            "↓", "", "", "↑",
+            "↓", "", "", "↑",
+            "→", "→", "→", "↑",
+        ];
+        const arrowsInnerCW = ["", "", "", "", "", "→", "↓", "", "", "↑", "←", "", "", "", "", ""]
+        const arrowsInnerCCW = ["", "", "", "", "", "↓", "←", "", "", "→", "↑", "", "", "", "", ""]
+        document.querySelectorAll(".arrow").forEach(a => {
+            a.style.opacity = 0
+        })
+        function initializeGame() {
+            rotationDirection = Math.random() < 0.5 ? "CW" : "CCW";
+            innerOpposite = Math.random() < 0.5;
+            revealArrows();
+            gameInitialized = true;
+        } function revealArrows() {
+            const arrows = document.querySelectorAll(".arrow")
+            let innerDirection = rotationDirection
+            if (innerOpposite) {
+                innerDirection = rotationDirection === "CW" ? "CCW" : "CW"
+            }
+            const outerSet = rotationDirection === "CW" ? arrowsOuterCW : arrowsOuterCCW
+            const innerSet = innerDirection === "CW" ? arrowsInnerCW : arrowsInnerCCW
+            arrows.forEach((a, i) => {
+                if (inner.includes(i)) {
+                    a.textContent = innerSet[i]
+                } else {
+                    a.textContent = outerSet[i]
+                }
+                if (a.textContent !== "") {
+                    a.style.opacity = 1
+                }
+            })
+        }
+        /* -------- EXISTING GAME SETUP -------- */
         boardElement.classList.add("redTurn")
         for (let i = 0; i < 8; i++) {
             let d = document.createElement("div")
             d.className = "dot redDot"
             redDotsContainer.appendChild(d)
-        }
-        for (let i = 0; i < 8; i++) {
+        } for (let i = 0; i < 8; i++) {
             let d = document.createElement("div")
             d.className = "dot blueDot"
             blueDotsContainer.appendChild(d)
-        }
-        function updateActivePlayer() {
+        } function updateActivePlayer() {
             document.getElementById("pl1").classList.toggle("activePlayer", player === "red")
             document.getElementById("pl2").classList.toggle("activePlayer", player === "blue")
-        }
-        function getColor(el) {
-            if (el.classList.contains("red")) return "red"
-            if (el.classList.contains("blue")) return "blue"
-            return ""
+        } function getColor(el) {
+            if (el.classList.contains("red")) return "red";
+            if (el.classList.contains("blue")) return "blue";
+            return "";
         }
         function setColor(el, color) {
-            el.classList.remove("red", "blue")
-            if (color) el.classList.add(color)
-        }
-        function rotateOrbit(indexes) {
-            const circles = document.querySelectorAll(".circle")
-            const colors = indexes.map(i => getColor(circles[i]))
-            colors.push(colors.shift())
+            el.classList.remove("red", "blue");
+            if (color) el.classList.add(color);
+        } /*
+            -------- ROTATION ENGINE -------- */
+        function rotateOrbit(indexes, direction) {
+            const
+                circles = document.querySelectorAll(".circle")
+            let colors = indexes.map(i => getColor(circles[i]))
+            if (direction === "CW") {
+                colors.unshift(colors.pop())
+            } else {
+                colors.push(colors.shift())
+            }
             indexes.forEach((idx, i) => {
                 setTimeout(() => {
                     setColor(circles[idx], colors[i])
@@ -482,9 +549,14 @@
             })
         }
         function rotateBoard() {
-            rotateOrbit(outer)
-            rotateOrbit(inner)
+            rotateOrbit(outer, rotationDirection)
+            let innerDirection = rotationDirection
+            if (innerOpposite) {
+                innerDirection = rotationDirection === "CW" ? "CCW" : "CW"
+            }
+            rotateOrbit(inner, innerDirection)
         }
+        /* -------- WIN LINE -------- */
         function drawWinLine(a, d) {
             const circles = document.querySelectorAll(".circle")
             const boardRect = boardElement.getBoundingClientRect()
@@ -504,6 +576,7 @@
             line.classList.add("winLine")
             svg.appendChild(line)
         }
+        /* -------- GAME END -------- */
         function showWin(player) {
             document.getElementById("winnerText").textContent =
                 player.charAt(0).toUpperCase() + player.slice(1) + " Wins!"
@@ -514,7 +587,7 @@
             document.getElementById("winModal").style.visibility = "visible"
             boardLocked = true
         }
-        /* win detection */
+        /* -------- WIN DETECTION -------- */
         function checkWin() {
             const circles = document.querySelectorAll(".circle")
             const board = [...circles].map(c => {
@@ -547,10 +620,14 @@
             }
             boardLocked = false
         }
+        /* -------- PLAYER MOVE -------- */
         document.querySelectorAll(".circle").forEach(circle => {
             circle.addEventListener("click", function () {
                 if (boardLocked) return
                 if (this.classList.contains("red") || this.classList.contains("blue")) return
+                if (!gameInitialized) {
+                    initializeGame()
+                }
                 boardLocked = true
                 this.classList.add(player)
                 if (player === "red") {
@@ -580,6 +657,7 @@
                 }, 2000)
             })
         })
+        /* -------- RESET -------- */
         function resetGame() {
             document.querySelectorAll(".circle").forEach(c => {
                 c.classList.remove("red", "blue")
@@ -596,6 +674,12 @@
             boardElement.classList.remove("redTurn", "blueTurn")
             boardElement.classList.add("redTurn")
             turnText.textContent = "Red player's turn"
+            rotationDirection = null
+            innerOpposite = null
+            gameInitialized = false
+            document.querySelectorAll(".arrow").forEach(a => {
+                a.style.opacity = 0
+            })
             updateActivePlayer()
         }
         document.getElementById("resetBoard").addEventListener("click", resetGame)
