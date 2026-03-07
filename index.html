@@ -67,11 +67,6 @@
             line-height: 1;
         }
 
-        #spinIcon.visible {
-            opacity: 1;
-            animation: spinCW 0.85s linear infinite;
-        }
-
         @keyframes spinCW {
             to {
                 transform: rotate(360deg);
@@ -115,7 +110,7 @@
         }
 
         #pl1.activePlayer {
-            transform: translateY(-50%) scale(1.06);
+            transform: translateY(-50%) scale(1.2);
         }
 
         #pl2 {
@@ -129,7 +124,7 @@
         }
 
         #pl2.activePlayer {
-            transform: translateY(-50%) scale(1.06);
+            transform: translateY(-50%) scale(1.2);
         }
 
         .dot-row {
@@ -775,7 +770,6 @@
         <div id="lockOverlay"></div>
         <div id="rotationOverlay">
             <div class="rot-badge">
-                <span id="rotBadgeIcon" class="rot-arrow-anim">⟳</span>
                 <span id="rotBadgeText">Rotating…</span>
             </div>
         </div>
@@ -792,17 +786,6 @@
                 `)
             }
         </script>
-    </div>
-    <!-- ROTATION DIRECTION PANEL -->
-    <div id="dirPanel">
-        <div class="dir-chip outer-chip">
-            <span class="dir-icon" id="outerIcon">⟳</span>
-            <span id="outerLabel">Outer ring: CW</span>
-        </div>
-        <div class="dir-chip inner-chip">
-            <span class="dir-icon" id="innerIcon">⟳</span>
-            <span id="innerLabel">Inner ring: CW</span>
-        </div>
     </div>
     <div id="turnText" class="turn red-turn">
         <span id="spinIcon">⟳</span>
@@ -852,7 +835,6 @@
             rotationDirection = Math.random() < .5 ? "CW" : "CCW"
             innerOpposite = Math.random() < .5
             revealArrows()
-            revealDirPanel()
             gameInitialized = true
         }
         function revealArrows() {
@@ -871,26 +853,6 @@
                     a.classList.add("bounce-in")
                 }
             })
-        }
-        function revealDirPanel() {
-            const innerDir = innerOpposite
-                ? (rotationDirection === "CW" ? "CCW" : "CW")
-                : rotationDirection
-            const outerIcon = document.getElementById("outerIcon")
-            const innerIcon = document.getElementById("innerIcon")
-            outerIcon.textContent = rotationDirection === "CW" ? "↻" : "↺"
-            innerIcon.textContent = innerDir === "CW" ? "↻" : "↺"
-            outerIcon.style.animation = rotationDirection === "CW"
-                ? "spinCW .9s linear infinite"
-                : "spinCCW .9s linear infinite"
-            innerIcon.style.animation = innerDir === "CW"
-                ? "spinCW .9s linear infinite"
-                : "spinCCW .9s linear infinite"
-            document.getElementById("outerLabel").textContent =
-                "Outer: " + (rotationDirection === "CW" ? "Clockwise" : "Counter-CW")
-            document.getElementById("innerLabel").textContent =
-                "Inner: " + (innerDir === "CW" ? "Clockwise" : "Counter-CW")
-            document.getElementById("dirPanel").classList.add("revealed")
         }
         /* ---------- GAME SETUP ---------- */
         boardElement.classList.add("redTurn")
@@ -960,13 +922,10 @@
             boardElement.classList.toggle("board-locked", val)
             const overlay = document.getElementById("rotationOverlay")
             if (rotating) {
-                // Set badge direction
-                const badge = document.getElementById("rotBadgeIcon")
-                badge.className = "rot-arrow-anim" + (rotationDirection === "CCW" ? " ccw" : "")
                 overlay.classList.add("visible")
                 turnLabel.textContent = "Board rotating…"
                 turnText.className = "turn rotating"
-                spinIcon.className = "visible"
+                spinIcon.className = ""
             } else {
                 overlay.classList.remove("visible")
                 spinIcon.className = ""
@@ -1091,7 +1050,6 @@
             document.querySelectorAll(".dot").forEach(d => d.classList.remove("used"))
             document.getElementById("lineLayer").innerHTML = ""
             document.getElementById("winModal").style.visibility = "hidden"
-            document.getElementById("dirPanel").classList.remove("revealed")
             document.getElementById("rotationOverlay").classList.remove("visible")
             redRemaining = 8
             blueRemaining = 8
